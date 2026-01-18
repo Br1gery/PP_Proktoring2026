@@ -1,8 +1,16 @@
 opencv-python
 numpy
-mediapipe
+mediapipe==0.10.14
 scipy
 pyautogui
 keyboard
 openpyxl
 ultralytics
+psycopg2
+sqlalchemy
+fastapi
+uvicorn
+bcrypt
+PyJWT
+dotenv
+uvicorn[standard]
