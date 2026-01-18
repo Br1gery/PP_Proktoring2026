@@ -1,0 +1,1149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Proctoring System Test</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+        }
+
+        .subtitle {
+            color: #666;
+            font-size: 1.2em;
+        }
+
+        .status-bar {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-left: 4px solid #007bff;
+        }
+
+        .status-bar.warning {
+            border-left-color: #ffc107;
+            background: #fff3cd;
+        }
+
+        .status-bar.danger {
+            border-left-color: #dc3545;
+            background: #f8d7da;
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 10px;
+        }
+
+        .status-normal {
+            background: #28a745;
+        }
+
+        .status-warning {
+            background: #ffc107;
+            animation: pulse 2s infinite;
+        }
+
+        .status-danger {
+            background: #dc3545;
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+
+        .dashboard {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        @media (max-width: 768px) {
+            .dashboard {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .panel {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        .panel h2 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 1.8em;
+            border-bottom: 2px solid #f0f0f0;
+            padding-bottom: 10px;
+        }
+
+        .auth-section, .session-section {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 10px;
+        }
+
+        input {
+            flex: 1;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        button {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 8px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        button:disabled {
+            background: #cccccc;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        }
+
+        .btn-warning {
+            background: linear-gradient(135deg, #ffc107 0%, #fd7e14 100%);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+        }
+
+        .video-container {
+            position: relative;
+            border-radius: 15px;
+            overflow: hidden;
+            background: #000;
+        }
+
+        #videoFeed {
+            width: 100%;
+            height: 400px;
+            object-fit: cover;
+        }
+
+        #debugCanvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .stat-card {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            border: 2px solid #e0e0e0;
+        }
+
+        .stat-card h3 {
+            color: #666;
+            font-size: 14px;
+            text-transform: uppercase;
+            margin-bottom: 10px;
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .deviations {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .deviation-meter {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+        }
+
+        .deviation-meter h4 {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+        }
+
+        .meter-bar {
+            height: 20px;
+            background: #e0e0e0;
+            border-radius: 10px;
+            overflow: hidden;
+            position: relative;
+            margin-bottom: 5px;
+        }
+
+        .meter-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #28a745, #ffc107, #dc3545);
+            transition: width 0.5s ease;
+        }
+
+        .meter-labels {
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+            color: #666;
+        }
+
+        .alerts-container {
+            max-height: 300px;
+            overflow-y: auto;
+            margin-top: 20px;
+        }
+
+        .alert-item {
+            padding: 10px 15px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            background: #f8f9fa;
+            border-left: 4px solid #007bff;
+            animation: slideIn 0.3s ease;
+        }
+
+        .alert-item.warning {
+            border-left-color: #ffc107;
+            background: #fff3cd;
+        }
+
+        .alert-item.danger {
+            border-left-color: #dc3545;
+            background: #f8d7da;
+        }
+
+        .alert-time {
+            font-size: 12px;
+            color: #666;
+            float: right;
+        }
+
+        .alert-message {
+            font-weight: 500;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .logs-container {
+            max-height: 200px;
+            overflow-y: auto;
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 15px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            margin-top: 20px;
+        }
+
+        .log-entry {
+            padding: 5px 0;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .log-time {
+            color: #666;
+            margin-right: 10px;
+        }
+
+        .log-message {
+            color: #333;
+        }
+
+        .connection-status {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 20px;
+            padding: 10px;
+            border-radius: 8px;
+            background: #f8f9fa;
+        }
+
+        .connection-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #dc3545;
+        }
+
+        .connection-dot.connected {
+            background: #28a745;
+            animation: pulse 2s infinite;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🔍 Proctoring System Test</h1>
+            <p class="subtitle">Real-time gaze and head direction monitoring</p>
+        </header>
+
+        <div class="status-bar" id="statusBar">
+            <div class="status-indicator status-normal" id="statusIndicator"></div>
+            <span id="statusText">System ready. Please log in and start session.</span>
+        </div>
+
+        <div class="dashboard">
+            <div class="panel">
+                <h2>🔐 Authentication</h2>
+                <div class="auth-section">
+                    <div class="input-group">
+                        <input type="text" id="username" placeholder="Username" value="testuser">
+                        <input type="password" id="password" placeholder="Password" value="testpass123">
+                    </div>
+                    <div class="input-group">
+                        <button onclick="register()" id="registerBtn">Register</button>
+                        <button onclick="login()" class="btn-success" id="loginBtn">Login</button>
+                        <button onclick="logout()" class="btn-danger" id="logoutBtn" disabled>Logout</button>
+                    </div>
+                    <div id="authStatus"></div>
+                </div>
+
+                <h2 style="margin-top: 30px;">🎬 Session Control</h2>
+                <div class="session-section">
+                    <div class="input-group">
+                        <button onclick="createSession()" id="createSessionBtn" disabled>Create Session</button>
+                        <button onclick="startWebSocket()" class="btn-success" id="startWsBtn" disabled>Connect WebSocket</button>
+                        <button onclick="stopWebSocket()" class="btn-danger" id="stopWsBtn" disabled>Disconnect</button>
+                    </div>
+                    <div class="input-group">
+                        <button onclick="calibrate()" class="btn-warning" id="calibrateBtn" disabled>Calibrate</button>
+                        <button onclick="toggleCamera()" id="cameraBtn">Start Camera</button>
+                        <button onclick="toggleStream()" id="streamBtn" disabled>Start Streaming</button>
+                    </div>
+                </div>
+
+                <div class="connection-status">
+                    <div class="connection-dot" id="wsStatus"></div>
+                    <span id="wsStatusText">WebSocket: Not connected</span>
+                </div>
+            </div>
+
+            <div class="panel">
+                <h2>📹 Live Preview</h2>
+                <div class="video-container">
+                    <video id="videoFeed" autoplay playsinline></video>
+                    <canvas id="debugCanvas"></canvas>
+                </div>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <h3>FPS</h3>
+                        <div class="stat-value" id="fpsCounter">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Frames Sent</h3>
+                        <div class="stat-value" id="framesCounter">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Status</h3>
+                        <div class="stat-value" id="overallStatus">Normal</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Alerts</h3>
+                        <div class="stat-value" id="alertsCounter">0</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="panel">
+            <h2>📊 Deviation Analysis</h2>
+            <div class="deviations">
+                <div class="deviation-meter">
+                    <h4>Gaze Vertical: <span id="gazeVerticalValue">0.0°</span></h4>
+                    <div class="meter-bar">
+                        <div class="meter-fill" id="gazeVerticalBar" style="width: 0%"></div>
+                    </div>
+                    <div class="meter-labels">
+                        <span>-20°</span>
+                        <span id="gazeVerticalMin">-2°</span>
+                        <span id="gazeVerticalCenter">0°</span>
+                        <span id="gazeVerticalMax">+2°</span>
+                        <span>+20°</span>
+                    </div>
+                </div>
+
+                <div class="deviation-meter">
+                    <h4>Gaze Horizontal: <span id="gazeHorizontalValue">0.0°</span></h4>
+                    <div class="meter-bar">
+                        <div class="meter-fill" id="gazeHorizontalBar" style="width: 50%"></div>
+                    </div>
+                    <div class="meter-labels">
+                        <span>-20°</span>
+                        <span id="gazeHorizontalMin">-4°</span>
+                        <span id="gazeHorizontalCenter">0°</span>
+                        <span id="gazeHorizontalMax">+4°</span>
+                        <span>+20°</span>
+                    </div>
+                </div>
+
+                <div class="deviation-meter">
+                    <h4>Head Vertical: <span id="headVerticalValue">0.0°</span></h4>
+                    <div class="meter-bar">
+                        <div class="meter-fill" id="headVerticalBar" style="width: 50%"></div>
+                    </div>
+                    <div class="meter-labels">
+                        <span>-20°</span>
+                        <span id="headVerticalMin">-2°</span>
+                        <span id="headVerticalCenter">0°</span>
+                        <span id="headVerticalMax">+2°</span>
+                        <span>+20°</span>
+                    </div>
+                </div>
+
+                <div class="deviation-meter">
+                    <h4>Head Horizontal: <span id="headHorizontalValue">0.0°</span></h4>
+                    <div class="meter-bar">
+                        <div class="meter-fill" id="headHorizontalBar" style="width: 50%"></div>
+                    </div>
+                    <div class="meter-labels">
+                        <span>-20°</span>
+                        <span id="headHorizontalMin">-4°</span>
+                        <span id="headHorizontalCenter">0°</span>
+                        <span id="headHorizontalMax">+4°</span>
+                        <span>+20°</span>
+                    </div>
+                </div>
+            </div>
+
+            <h3 style="margin-top: 30px;">⚠️ Alerts & Warnings</h3>
+            <div class="alerts-container" id="alertsContainer">
+                <div class="alert-item">
+                    <span class="alert-message">No alerts yet</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="panel">
+            <h2>📝 System Logs</h2>
+            <div class="logs-container" id="logsContainer">
+                <div class="log-entry">
+                    <span class="log-time">[00:00:00]</span>
+                    <span class="log-message">System initialized</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Конфигурация
+        const API_BASE_URL = 'http://localhost:8000';
+        const WS_BASE_URL = 'ws://localhost:8000/ws';
+        
+        // Глобальные переменные
+        let token = null;
+        let sessionId = null;
+        let ws = null;
+        let isAuthenticated = false;
+        let isCameraActive = false;
+        let isStreaming = false;
+        let stream = null;
+        let canvas = null;
+        let ctx = null;
+        let frameInterval = null;
+        let framesSent = 0;
+        let alerts = [];
+        
+        // DOM элементы
+        const videoFeed = document.getElementById('videoFeed');
+        const debugCanvas = document.getElementById('debugCanvas');
+        const wsStatus = document.getElementById('wsStatus');
+        const wsStatusText = document.getElementById('wsStatusText');
+        const statusBar = document.getElementById('statusBar');
+        const statusIndicator = document.getElementById('statusIndicator');
+        const statusText = document.getElementById('statusText');
+        
+        // Логирование
+        function log(message) {
+            const logsContainer = document.getElementById('logsContainer');
+            const time = new Date().toLocaleTimeString();
+            const logEntry = document.createElement('div');
+            logEntry.className = 'log-entry';
+            logEntry.innerHTML = `<span class="log-time">[${time}]</span> <span class="log-message">${message}</span>`;
+            logsContainer.prepend(logEntry);
+            
+            // Ограничиваем количество логов
+            if (logsContainer.children.length > 20) {
+                logsContainer.removeChild(logsContainer.lastChild);
+            }
+            
+            console.log(`[${time}] ${message}`);
+        }
+        
+        // Обновление статуса
+        function updateStatus(status, message) {
+            statusText.textContent = message;
+            
+            // Убираем все классы статуса
+            statusBar.className = 'status-bar';
+            statusIndicator.className = 'status-indicator';
+            
+            // Добавляем соответствующий класс
+            if (status === 'warning') {
+                statusBar.classList.add('warning');
+                statusIndicator.classList.add('status-warning');
+            } else if (status === 'danger') {
+                statusBar.classList.add('danger');
+                statusIndicator.classList.add('status-danger');
+            } else {
+                statusIndicator.classList.add('status-normal');
+            }
+        }
+        
+        // Обновление WebSocket статуса
+        function updateWsStatus(connected) {
+            wsStatus.className = 'connection-dot';
+            if (connected) {
+                wsStatus.classList.add('connected');
+                wsStatusText.textContent = 'WebSocket: Connected';
+                log('WebSocket connected successfully');
+            } else {
+                wsStatusText.textContent = 'WebSocket: Not connected';
+            }
+        }
+        
+        // Регистрация
+        async function register() {
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            
+            if (!username || !password) {
+                alert('Please enter username and password');
+                return;
+            }
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/register`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        username: username,
+                        password: password
+                    })
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    log(`User registered: ${data.username}`);
+                    alert('Registration successful! Please login.');
+                } else {
+                    const error = await response.json();
+                    alert(`Registration failed: ${error.detail}`);
+                }
+            } catch (error) {
+                log(`Registration error: ${error.message}`);
+                alert('Connection error. Make sure server is running on localhost:8000');
+            }
+        }
+        
+        // Вход
+        async function login() {
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            
+            if (!username || !password) {
+                alert('Please enter username and password');
+                return;
+            }
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        username: username,
+                        password: password
+                    })
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    token = data.access_token;
+                    isAuthenticated = true;
+                    
+                    // Обновляем UI
+                    document.getElementById('loginBtn').disabled = true;
+                    document.getElementById('registerBtn').disabled = true;
+                    document.getElementById('logoutBtn').disabled = false;
+                    document.getElementById('createSessionBtn').disabled = false;
+                    
+                    log(`Logged in as ${username}`);
+                    updateStatus('normal', `Logged in as ${username}`);
+                } else {
+                    const error = await response.json();
+                    alert(`Login failed: ${error.detail}`);
+                }
+            } catch (error) {
+                log(`Login error: ${error.message}`);
+                alert('Connection error. Make sure server is running on localhost:8000');
+            }
+        }
+        
+        // Выход
+        async function logout() {
+            if (!token) return;
+            
+            try {
+                await fetch(`${API_BASE_URL}/logout`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                // Сброс состояния
+                token = null;
+                isAuthenticated = false;
+                stopWebSocket();
+                stopCamera();
+                stopStreaming();
+                
+                // Обновляем UI
+                document.getElementById('loginBtn').disabled = false;
+                document.getElementById('registerBtn').disabled = false;
+                document.getElementById('logoutBtn').disabled = true;
+                document.getElementById('createSessionBtn').disabled = true;
+                document.getElementById('startWsBtn').disabled = true;
+                document.getElementById('calibrateBtn').disabled = true;
+                
+                log('Logged out');
+                updateStatus('normal', 'Logged out. Please login again.');
+            } catch (error) {
+                log(`Logout error: ${error.message}`);
+            }
+        }
+        
+        // Создание сессии
+        async function createSession() {
+            if (!token) {
+                alert('Please login first');
+                return;
+            }
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/sessions/create`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    sessionId = data.session_id;
+                    
+                    document.getElementById('startWsBtn').disabled = false;
+                    document.getElementById('calibrateBtn').disabled = false;
+                    
+                    log(`Session created: ${sessionId}`);
+                    updateStatus('normal', `Session created: ${sessionId.substring(0, 8)}...`);
+                } else {
+                    alert('Failed to create session');
+                }
+            } catch (error) {
+                log(`Session creation error: ${error.message}`);
+            }
+        }
+        
+        // Запуск WebSocket
+        function startWebSocket() {
+            if (!sessionId) {
+                alert('Please create a session first');
+                return;
+            }
+            
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                alert('WebSocket already connected');
+                return;
+            }
+            
+            ws = new WebSocket(`${WS_BASE_URL}/${sessionId}`);
+            
+            ws.onopen = () => {
+                log('WebSocket connection opened');
+                updateWsStatus(true);
+                document.getElementById('stopWsBtn').disabled = false;
+                document.getElementById('streamBtn').disabled = false;
+            };
+            
+            ws.onmessage = (event) => {
+                const data = JSON.parse(event.data);
+                handleWebSocketMessage(data);
+            };
+            
+            ws.onerror = (error) => {
+                log(`WebSocket error: ${error}`);
+                updateWsStatus(false);
+            };
+            
+            ws.onclose = () => {
+                log('WebSocket connection closed');
+                updateWsStatus(false);
+                document.getElementById('stopWsBtn').disabled = true;
+                document.getElementById('streamBtn').disabled = true;
+                stopStreaming();
+            };
+        }
+        
+        // Остановка WebSocket
+        function stopWebSocket() {
+            if (ws) {
+                ws.close();
+                ws = null;
+            }
+            stopStreaming();
+            updateWsStatus(false);
+        }
+        
+        // Обработка сообщений WebSocket
+        function handleWebSocketMessage(data) {
+            console.log('WebSocket message received:', data);
+            switch (data.type) {
+                case 'status_update':
+                    updateProctoringData(data.data);
+                    break;
+                case 'calibration_complete':
+                    log('Calibration completed');
+                    updateStatus('normal', 'Calibration completed successfully');
+                    break;
+                case 'settings_updated':
+                    log(`Setting updated: ${data.setting} = ${data.value}`);
+                    break;
+                default:
+                    log(`Unknown message type: ${data.type}`);
+            }
+        }
+        
+        // Обновление данных прокторинга
+        function updateProctoringData(data) {
+            // Обновление счетчиков
+            document.getElementById('fpsCounter').textContent = data.fps?.toFixed(1) || '0';
+            document.getElementById('framesCounter').textContent = data.frame_count || '0';
+            
+            // Обновление отклонений
+            const gazeVertical = data.deviations?.gaze_vertical || 0;
+            const gazeHorizontal = data.deviations?.gaze_horizontal || 0;
+            const headVertical = data.deviations?.head_vertical || 0;
+            const headHorizontal = data.deviations?.head_horizontal || 0;
+            
+            document.getElementById('gazeVerticalValue').textContent = gazeVertical.toFixed(1) + '°';
+            document.getElementById('gazeHorizontalValue').textContent = gazeHorizontal.toFixed(1) + '°';
+            document.getElementById('headVerticalValue').textContent = headVertical.toFixed(1) + '°';
+            document.getElementById('headHorizontalValue').textContent = headHorizontal.toFixed(1) + '°';
+            
+            // Обновление шкал
+            updateMeter('gazeVertical', gazeVertical, data.limits?.gaze_vertical_up, data.limits?.gaze_vertical_down);
+            updateMeter('gazeHorizontal', gazeHorizontal, data.limits?.gaze_horizontal, data.limits?.gaze_horizontal);
+            updateMeter('headVertical', headVertical, data.limits?.head_vertical_up, data.limits?.head_vertical_down);
+            updateMeter('headHorizontal', headHorizontal, data.limits?.head_horizontal, data.limits?.head_horizontal);
+            
+            // Обновление общего статуса
+            const states = data.current_state || {};
+            const maxState = Math.max(
+                states.head_vertical || 0,
+                states.head_horizontal || 0,
+                states.gaze_vertical || 0,
+                states.gaze_horizontal || 0
+            );
+            
+            let overallStatus = 'Normal';
+            let statusColor = 'normal';
+            
+            if (maxState === 2) {
+                overallStatus = 'DANGER';
+                statusColor = 'danger';
+            } else if (maxState === 1) {
+                overallStatus = 'Warning';
+                statusColor = 'warning';
+            }
+            
+            document.getElementById('overallStatus').textContent = overallStatus;
+            document.getElementById('overallStatus').style.color = 
+                statusColor === 'danger' ? '#dc3545' : 
+                statusColor === 'warning' ? '#ffc107' : '#28a745';
+            
+            // Обновление алертов
+            if (data.alerts && data.alerts.length > 0) {
+                updateAlerts(data.alerts);
+                document.getElementById('alertsCounter').textContent = data.alerts.length;
+                
+                // Если есть алерты, обновляем статус
+                if (data.alerts.some(alert => alert.includes('DANGER'))) {
+                    updateStatus('danger', data.alerts[0]);
+                } else if (data.alerts.some(alert => alert.includes('WARNING'))) {
+                    updateStatus('warning', data.alerts[0]);
+                }
+            }
+            
+            // Отображение графики для дебага
+            if (data.graphics_frame) {
+                displayDebugGraphics(data.graphics_frame);
+            }
+            
+            // Логирование изменений статуса
+            if (data.status_changed) {
+                log(`Status changed: ${overallStatus}`);
+            }
+        }
+        
+        // Обновление шкалы отклонений
+        function updateMeter(type, value, allowedUp, allowedDown) {
+            const bar = document.getElementById(`${type}Bar`);
+            const minLabel = document.getElementById(`${type}Min`);
+            const maxLabel = document.getElementById(`${type}Max`);
+            
+            // Устанавливаем метки
+            if (allowedDown !== undefined) {
+                minLabel.textContent = `-${allowedDown.toFixed(1)}°`;
+            }
+            if (allowedUp !== undefined) {
+                maxLabel.textContent = `+${allowedUp.toFixed(1)}°`;
+            }
+            
+            // Вычисляем положение на шкале от -20° до +20°
+            let position = ((value + 20) / 40) * 100;
+            position = Math.max(0, Math.min(100, position));
+            
+            bar.style.width = `${position}%`;
+            
+            // Цвет в зависимости от отклонения
+            const absValue = Math.abs(value);
+            let colorStart = '#28a745';
+            let colorEnd = '#28a745';
+            
+            if (value < 0) {
+                allowedUp = allowedDown;
+            }
+            
+            if (absValue > (allowedUp + 15)) {
+                colorStart = '#dc3545';
+                colorEnd = '#c82333';
+            } else if (absValue > (allowedUp + 8)) {
+                colorStart = '#ffc107';
+                colorEnd = '#fd7e14';
+            } else if (absValue > allowedUp) {
+                colorStart = '#ffc107';
+                colorEnd = '#ffc107';
+            }
+            
+            bar.style.background = `linear-gradient(90deg, ${colorStart}, ${colorEnd})`;
+        }
+        
+        // Обновление алертов
+        function updateAlerts(newAlerts) {
+            const container = document.getElementById('alertsContainer');
+            container.innerHTML = '';
+            
+            newAlerts.forEach(alert => {
+                const alertItem = document.createElement('div');
+                alertItem.className = 'alert-item';
+                
+                if (alert.includes('DANGER')) {
+                    alertItem.classList.add('danger');
+                } else if (alert.includes('WARNING')) {
+                    alertItem.classList.add('warning');
+                }
+                
+                const time = new Date().toLocaleTimeString();
+                alertItem.innerHTML = `
+                    <span class="alert-message">${alert}</span>
+                    <span class="alert-time">${time}</span>
+                `;
+                
+                container.prepend(alertItem);
+            });
+            
+            // Ограничиваем количество алертов
+            if (container.children.length > 10) {
+                container.removeChild(container.lastChild);
+            }
+        }
+        
+        // Отображение графики для дебага
+        function displayDebugGraphics(base64Image) {
+            const canvas = document.getElementById('debugCanvas');
+            const ctx = canvas.getContext('2d');
+            
+            const img = new Image();
+            img.onload = () => {
+                canvas.width = img.width;
+                canvas.height = img.height;
+                ctx.drawImage(img, 0, 0);
+            };
+            img.src = `data:image/jpeg;base64,${base64Image}`;
+        }
+        
+        // Запуск камеры
+        async function toggleCamera() {
+            if (isCameraActive) {
+                stopCamera();
+            } else {
+                await startCamera();
+            }
+        }
+        
+        async function startCamera() {
+            try {
+                stream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { 
+                        width: { ideal: 640 },
+                        height: { ideal: 480 },
+                        frameRate: { ideal: 20 }
+                    },
+                    audio: false 
+                });
+                
+                videoFeed.srcObject = stream;
+                isCameraActive = true;
+                document.getElementById('cameraBtn').textContent = 'Stop Camera';
+                document.getElementById('cameraBtn').classList.add('btn-danger');
+                
+                // Инициализация canvas для захвата кадров
+                canvas = document.createElement('canvas');
+                ctx = canvas.getContext('2d');
+                
+                log('Camera started');
+            } catch (error) {
+                log(`Camera error: ${error.message}`);
+                alert('Failed to access camera. Please check permissions.');
+            }
+        }
+        
+        function stopCamera() {
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+                stream = null;
+            }
+            
+            videoFeed.srcObject = null;
+            isCameraActive = false;
+            document.getElementById('cameraBtn').textContent = 'Start Camera';
+            document.getElementById('cameraBtn').classList.remove('btn-danger');
+            
+            stopStreaming();
+            log('Camera stopped');
+        }
+        
+        // Запуск стриминга
+        function toggleStream() {
+            if (isStreaming) {
+                stopStreaming();
+            } else {
+                startStreaming();
+            }
+        }
+        
+        function startStreaming() {
+            if (!ws || ws.readyState !== WebSocket.OPEN) {
+                alert('Please connect WebSocket first');
+                return;
+            }
+            
+            if (!isCameraActive) {
+                alert('Please start camera first');
+                return;
+            }
+            
+            isStreaming = true;
+            document.getElementById('streamBtn').textContent = 'Stop Streaming';
+            document.getElementById('streamBtn').classList.add('btn-danger');
+            
+            // Настройка FPS (20 кадров в секунду)
+            const targetFps = 20;
+            frameInterval = setInterval(captureAndSendFrame, 1000 / targetFps);
+            
+            log('Started streaming frames to server');
+        }
+        
+        function stopStreaming() {
+            if (frameInterval) {
+                clearInterval(frameInterval);
+                frameInterval = null;
+            }
+            
+            isStreaming = false;
+            document.getElementById('streamBtn').textContent = 'Start Streaming';
+            document.getElementById('streamBtn').classList.remove('btn-danger');
+            
+            log('Stopped streaming frames');
+        }
+        
+        // Захват и отправка кадра
+        function captureAndSendFrame() {
+            if (!stream || !canvas || !ctx || !ws || ws.readyState !== WebSocket.OPEN) {
+                return;
+            }
+            
+            try {
+                // Устанавливаем размеры canvas как у видео
+                canvas.width = videoFeed.videoWidth;
+                canvas.height = videoFeed.videoHeight;
+                
+                // Захватываем кадр
+                ctx.drawImage(videoFeed, 0, 0, canvas.width, canvas.height);
+                
+                // Конвертируем в base64
+                const imageData = canvas.toDataURL('image/jpeg', 0.8);
+                const base64Data = imageData.split(',')[1];
+                
+                // Отправляем через WebSocket
+                ws.send(JSON.stringify({
+                    type: 'frame',
+                    data: base64Data,
+                    timestamp: Date.now()
+                }));
+                
+                framesSent++;
+                document.getElementById('framesCounter').textContent = framesSent;
+            } catch (error) {
+                console.error('Error capturing frame:', error);
+            }
+        }
+        
+        // Калибровка
+        function calibrate() {
+            if (!ws || ws.readyState !== WebSocket.OPEN) {
+                alert('Please connect WebSocket first');
+                return;
+            }
+            
+            if (confirm('Please look straight at the camera center, then click OK to calibrate.')) {
+                ws.send(JSON.stringify({
+                    type: 'command',
+                    command: 'calibrate'
+                }));
+                
+                log('Calibration command sent');
+                updateStatus('normal', 'Calibrating... Please look straight at the camera.');
+            }
+        }
+        
+        // Инициализация
+        window.addEventListener('load', () => {
+            log('Proctoring test interface loaded');
+            updateStatus('normal', 'System ready. Please log in and start session.');
+            
+            // Проверяем доступность камеры
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                alert('Camera access is not supported in this browser');
+                document.getElementById('cameraBtn').disabled = true;
+            }
+            
+            // Проверяем доступность WebSocket
+            if (!window.WebSocket) {
+                alert('WebSocket is not supported in this browser');
+                document.getElementById('startWsBtn').disabled = true;
+            }
+            
+            // Добавляем обработчик закрытия страницы
+            window.addEventListener('beforeunload', () => {
+                stopWebSocket();
+                stopCamera();
+            });
+        });
+    </script>
+</body>
+</html>
