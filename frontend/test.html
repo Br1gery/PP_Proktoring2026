@@ -1,0 +1,733 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Тест системы прокторинга</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+        }
+
+        .subtitle {
+            color: #666;
+            font-size: 1.2em;
+        }
+
+        .status-bar {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-left: 4px solid #007bff;
+        }
+
+        .status-bar.warning {
+            border-left-color: #ffc107;
+            background: #fff3cd;
+        }
+
+        .status-bar.danger {
+            border-left-color: #dc3545;
+            background: #f8d7da;
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 10px;
+        }
+
+        .status-normal {
+            background: #28a745;
+        }
+
+        .status-warning {
+            background: #ffc107;
+            animation: pulse 2s infinite;
+        }
+
+        .status-danger {
+            background: #dc3545;
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+
+        .dashboard {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        @media (max-width: 768px) {
+            .dashboard {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .panel {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        .panel h2 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 1.8em;
+            border-bottom: 2px solid #f0f0f0;
+            padding-bottom: 10px;
+        }
+
+        .auth-section, .session-section {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 10px;
+        }
+
+        input {
+            flex: 1;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        button {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 8px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        button:disabled {
+            background: #cccccc;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        }
+
+        .btn-warning {
+            background: linear-gradient(135deg, #ffc107 0%, #fd7e14 100%);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+        }
+
+        .video-container {
+            position: relative;
+            border-radius: 15px;
+            overflow: hidden;
+            background: #000;
+        }
+
+        #videoFeed {
+            width: 100%;
+            height: 400px;
+            object-fit: cover;
+        }
+
+        #debugCanvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+
+        .connection-status {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 20px;
+            padding: 10px;
+            border-radius: 8px;
+            background: #f8f9fa;
+        }
+
+        .connection-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #dc3545;
+        }
+
+        .connection-dot.connected {
+            background: #28a745;
+            animation: pulse 2s infinite;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Тест системы прокторинга</h1>
+            <p class="subtitle">Мониторинг направления взгляда и положения головы в реальном времени</p>
+        </header>
+
+        <div class="dashboard">
+            <div class="panel">
+                <h2>Аутентификация</h2>
+                <div class="auth-section">
+                    <div class="input-group">
+                        <input type="text" id="username" placeholder="Имя пользователя" value="testuser">
+                        <input type="password" id="password" placeholder="Пароль" value="testpass123">
+                    </div>
+                    <div class="input-group">
+                        <button onclick="register()" id="registerBtn">Регистрация</button>
+                        <button onclick="login()" class="btn-success" id="loginBtn">Вход</button>
+                        <button onclick="logout()" class="btn-danger" id="logoutBtn" disabled>Выход</button>
+                    </div>
+                    <div id="authStatus"></div>
+                </div>
+
+                <h2 style="margin-top: 30px;">Управление сеансом</h2>
+                <div class="session-section">
+                    <div class="input-group">
+                        <button onclick="createSession()" id="createSessionBtn" disabled>Создать сеанс</button>
+                        <button onclick="startWebSocket()" class="btn-success" id="startWsBtn" disabled>Подключить WebSocket</button>
+                        <button onclick="stopWebSocket()" class="btn-danger" id="stopWsBtn" disabled>Отключить</button>
+                    </div>
+                    <div class="input-group">
+                        <button onclick="calibrate()" class="btn-warning" id="calibrateBtn" disabled>Калибровка</button>
+                        <button onclick="toggleCamera()" id="cameraBtn">Включить камеру</button>
+                        <button onclick="toggleStream()" id="streamBtn" disabled>Начать трансляцию</button>
+                    </div>
+                </div>
+
+                <div class="connection-status">
+                    <div class="connection-dot" id="wsStatus"></div>
+                    <span id="wsStatusText">WebSocket: Не подключен</span>
+                </div>
+            </div>
+
+            <div class="panel">
+                <h2>Видеопоток</h2>
+                <div class="video-container">
+                    <video id="videoFeed" autoplay playsinline></video>
+                    <canvas id="debugCanvas"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Конфигурация
+        const API_BASE_URL = 'http://localhost:8000';
+        const WS_BASE_URL = 'ws://localhost:8000/ws';
+        
+        // Глобальные переменные
+        let token = null;
+        let sessionId = null;
+        let ws = null;
+        let isAuthenticated = false;
+        let isCameraActive = false;
+        let isStreaming = false;
+        let stream = null;
+        let canvas = null;
+        let ctx = null;
+        let frameInterval = null;
+        let framesSent = 0;
+        
+        // DOM элементы
+        const videoFeed = document.getElementById('videoFeed');
+        const debugCanvas = document.getElementById('debugCanvas');
+        const wsStatus = document.getElementById('wsStatus');
+        const wsStatusText = document.getElementById('wsStatusText');
+        const statusBar = document.getElementById('statusBar');
+        const statusIndicator = document.getElementById('statusIndicator');
+        const statusText = document.getElementById('statusText');
+        
+        // Логирование
+        function log(message) {
+            console.log(`[${new Date().toLocaleTimeString()}] ${message}`);
+        }
+        
+        // Обновление статуса
+        function updateStatus(status, message) {
+            statusText.textContent = message;
+            
+            // Убираем все классы статуса
+            statusBar.className = 'status-bar';
+            statusIndicator.className = 'status-indicator';
+            
+            // Добавляем соответствующий класс
+            if (status === 'warning') {
+                statusBar.classList.add('warning');
+                statusIndicator.classList.add('status-warning');
+            } else if (status === 'danger') {
+                statusBar.classList.add('danger');
+                statusIndicator.classList.add('status-danger');
+            } else {
+                statusIndicator.classList.add('status-normal');
+            }
+        }
+        
+        // Обновление WebSocket статуса
+        function updateWsStatus(connected) {
+            wsStatus.className = 'connection-dot';
+            if (connected) {
+                wsStatus.classList.add('connected');
+                wsStatusText.textContent = 'WebSocket: Подключен';
+                log('WebSocket подключен успешно');
+            } else {
+                wsStatusText.textContent = 'WebSocket: Не подключен';
+            }
+        }
+        
+        // Регистрация
+        async function register() {
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            
+            if (!username || !password) {
+                alert('Введите имя пользователя и пароль');
+                return;
+            }
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/register`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        username: username,
+                        password: password
+                    })
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    log(`Пользователь зарегистрирован: ${data.username}`);
+                    alert('Регистрация успешна! Теперь войдите в систему.');
+                } else {
+                    const error = await response.json();
+                    alert(`Ошибка регистрации: ${error.detail}`);
+                }
+            } catch (error) {
+                log(`Ошибка регистрации: ${error.message}`);
+                alert('Ошибка соединения. Убедитесь, что сервер запущен на localhost:8000');
+            }
+        }
+        
+        // Вход
+        async function login() {
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            
+            if (!username || !password) {
+                alert('Введите имя пользователя и пароль');
+                return;
+            }
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        username: username,
+                        password: password
+                    })
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    token = data.access_token;
+                    isAuthenticated = true;
+                    
+                    // Обновляем UI
+                    document.getElementById('loginBtn').disabled = true;
+                    document.getElementById('registerBtn').disabled = true;
+                    document.getElementById('logoutBtn').disabled = false;
+                    document.getElementById('createSessionBtn').disabled = false;
+                    
+                    log(`Вход выполнен как ${username}`);
+                    updateStatus('normal', `Вы вошли как ${username}`);
+                } else {
+                    const error = await response.json();
+                    alert(`Ошибка входа: ${error.detail}`);
+                }
+            } catch (error) {
+                log(`Ошибка входа: ${error.message}`);
+                alert('Ошибка соединения. Убедитесь, что сервер запущен на localhost:8000');
+            }
+        }
+        
+        // Выход
+        async function logout() {
+            if (!token) return;
+            
+            try {
+                await fetch(`${API_BASE_URL}/logout`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                // Сброс состояния
+                token = null;
+                isAuthenticated = false;
+                stopWebSocket();
+                stopCamera();
+                stopStreaming();
+                
+                // Обновляем UI
+                document.getElementById('loginBtn').disabled = false;
+                document.getElementById('registerBtn').disabled = false;
+                document.getElementById('logoutBtn').disabled = true;
+                document.getElementById('createSessionBtn').disabled = true;
+                document.getElementById('startWsBtn').disabled = true;
+                document.getElementById('calibrateBtn').disabled = true;
+                
+                log('Выход выполнен');
+                updateStatus('normal', 'Выход выполнен. Пожалуйста, войдите снова.');
+            } catch (error) {
+                log(`Ошибка выхода: ${error.message}`);
+            }
+        }
+        
+        // Создание сессии
+        async function createSession() {
+            if (!token) {
+                alert('Сначала войдите в систему');
+                return;
+            }
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/sessions/create`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    sessionId = data.session_id;
+                    
+                    document.getElementById('startWsBtn').disabled = false;
+                    document.getElementById('calibrateBtn').disabled = false;
+                    
+                    log(`Сеанс создан: ${sessionId}`);
+                    updateStatus('normal', `Сеанс создан: ${sessionId.substring(0, 8)}...`);
+                } else {
+                    alert('Не удалось создать сеанс');
+                }
+            } catch (error) {
+                log(`Ошибка создания сеанса: ${error.message}`);
+            }
+        }
+        
+        // Запуск WebSocket
+        function startWebSocket() {
+            if (!sessionId) {
+                alert('Сначала создайте сеанс');
+                return;
+            }
+            
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                alert('WebSocket уже подключен');
+                return;
+            }
+            
+            ws = new WebSocket(`${WS_BASE_URL}/${sessionId}`);
+            
+            ws.onopen = () => {
+                log('Соединение WebSocket открыто');
+                updateWsStatus(true);
+                document.getElementById('stopWsBtn').disabled = false;
+                document.getElementById('streamBtn').disabled = false;
+            };
+            
+            ws.onmessage = (event) => {
+                const data = JSON.parse(event.data);
+                handleWebSocketMessage(data);
+            };
+            
+            ws.onerror = (error) => {
+                log(`Ошибка WebSocket: ${error}`);
+                updateWsStatus(false);
+            };
+            
+            ws.onclose = () => {
+                log('Соединение WebSocket закрыто');
+                updateWsStatus(false);
+                document.getElementById('stopWsBtn').disabled = true;
+                document.getElementById('streamBtn').disabled = true;
+                stopStreaming();
+            };
+        }
+        
+        // Остановка WebSocket
+        function stopWebSocket() {
+            if (ws) {
+                ws.close();
+                ws = null;
+            }
+            stopStreaming();
+            updateWsStatus(false);
+        }
+        
+        // Обработка сообщений WebSocket
+        function handleWebSocketMessage(data) {
+            console.log('Получено сообщение WebSocket:', data);
+            switch (data.type) {
+                case 'status_update':
+                    // Обработка обновления статуса
+                    break;
+                case 'calibration_complete':
+                    log('Калибровка завершена');
+                    updateStatus('normal', 'Калибровка успешно завершена');
+                    break;
+                case 'settings_updated':
+                    log(`Настройка обновлена: ${data.setting} = ${data.value}`);
+                    break;
+                default:
+                    log(`Неизвестный тип сообщения: ${data.type}`);
+            }
+        }
+        
+        // Запуск камеры
+        async function toggleCamera() {
+            if (isCameraActive) {
+                stopCamera();
+            } else {
+                await startCamera();
+            }
+        }
+        
+        async function startCamera() {
+            try {
+                stream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { 
+                        width: { ideal: 640 },
+                        height: { ideal: 480 },
+                        frameRate: { ideal: 20 }
+                    },
+                    audio: false 
+                });
+                
+                videoFeed.srcObject = stream;
+                isCameraActive = true;
+                document.getElementById('cameraBtn').textContent = 'Выключить камеру';
+                document.getElementById('cameraBtn').classList.add('btn-danger');
+                
+                // Инициализация canvas для захвата кадров
+                canvas = document.createElement('canvas');
+                ctx = canvas.getContext('2d');
+                
+                log('Камера запущена');
+            } catch (error) {
+                log(`Ошибка камеры: ${error.message}`);
+                alert('Не удалось получить доступ к камере. Проверьте разрешения.');
+            }
+        }
+        
+        function stopCamera() {
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+                stream = null;
+            }
+            
+            videoFeed.srcObject = null;
+            isCameraActive = false;
+            document.getElementById('cameraBtn').textContent = 'Включить камеру';
+            document.getElementById('cameraBtn').classList.remove('btn-danger');
+            
+            stopStreaming();
+            log('Камера остановлена');
+        }
+        
+        // Запуск стриминга
+        function toggleStream() {
+            if (isStreaming) {
+                stopStreaming();
+            } else {
+                startStreaming();
+            }
+        }
+        
+        function startStreaming() {
+            if (!ws || ws.readyState !== WebSocket.OPEN) {
+                alert('Сначала подключите WebSocket');
+                return;
+            }
+            
+            if (!isCameraActive) {
+                alert('Сначала включите камеру');
+                return;
+            }
+            
+            isStreaming = true;
+            document.getElementById('streamBtn').textContent = 'Остановить трансляцию';
+            document.getElementById('streamBtn').classList.add('btn-danger');
+            
+            // Настройка FPS (20 кадров в секунду)
+            const targetFps = 20;
+            frameInterval = setInterval(captureAndSendFrame, 1000 / targetFps);
+            
+            log('Начата трансляция кадров на сервер');
+        }
+        
+        function stopStreaming() {
+            if (frameInterval) {
+                clearInterval(frameInterval);
+                frameInterval = null;
+            }
+            
+            isStreaming = false;
+            document.getElementById('streamBtn').textContent = 'Начать трансляцию';
+            document.getElementById('streamBtn').classList.remove('btn-danger');
+            
+            log('Трансляция кадров остановлена');
+        }
+        
+        // Захват и отправка кадра
+        function captureAndSendFrame() {
+            if (!stream || !canvas || !ctx || !ws || ws.readyState !== WebSocket.OPEN) {
+                return;
+            }
+            
+            try {
+                // Устанавливаем размеры canvas как у видео
+                canvas.width = videoFeed.videoWidth;
+                canvas.height = videoFeed.videoHeight;
+                
+                // Захватываем кадр
+                ctx.drawImage(videoFeed, 0, 0, canvas.width, canvas.height);
+                
+                // Конвертируем в base64
+                const imageData = canvas.toDataURL('image/jpeg', 0.8);
+                const base64Data = imageData.split(',')[1];
+                
+                // Отправляем через WebSocket
+                ws.send(JSON.stringify({
+                    type: 'frame',
+                    data: base64Data,
+                    timestamp: Date.now()
+                }));
+                
+                framesSent++;
+            } catch (error) {
+                console.error('Ошибка захвата кадра:', error);
+            }
+        }
+        
+        // Калибровка
+        function calibrate() {
+            if (!ws || ws.readyState !== WebSocket.OPEN) {
+                alert('Сначала подключите WebSocket');
+                return;
+            }
+            
+            if (confirm('Пожалуйста, смотрите прямо в центр камеры, затем нажмите OK для калибровки.')) {
+                ws.send(JSON.stringify({
+                    type: 'command',
+                    command: 'calibrate'
+                }));
+                
+                log('Команда калибровки отправлена');
+                updateStatus('normal', 'Калибровка... Пожалуйста, смотрите прямо в камеру.');
+            }
+        }
+        
+        // Инициализация
+        window.addEventListener('load', () => {
+            log('Интерфейс тестирования прокторинга загружен');
+            updateStatus('normal', 'Система готова. Войдите и начните сеанс.');
+            
+            // Проверяем доступность камеры
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                alert('Доступ к камере не поддерживается в этом браузере');
+                document.getElementById('cameraBtn').disabled = true;
+            }
+            
+            // Проверяем доступность WebSocket
+            if (!window.WebSocket) {
+                alert('WebSocket не поддерживается в этом браузере');
+                document.getElementById('startWsBtn').disabled = true;
+            }
+            
+            // Добавляем обработчик закрытия страницы
+            window.addEventListener('beforeunload', () => {
+                stopWebSocket();
+                stopCamera();
+            });
+        });
+    </script>
+</body>
+</html>
