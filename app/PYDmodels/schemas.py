@@ -1,6 +1,6 @@
 # schemas.py
-from pydantic import BaseModel, EmailStr
-from typing import Optional, Dict, Any
+from pydantic import BaseModel
+from typing import Optional, Dict
 from datetime import datetime
 
 class UserBase(BaseModel):

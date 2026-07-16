@@ -4,8 +4,6 @@ import mediapipe as mp
 import time
 import math
 from scipy.spatial.transform import Rotation as Rscipy
-import json
-from datetime import datetime
 from ultralytics import YOLO
 
 # Screen setup
@@ -553,7 +551,7 @@ def draw_info(frame, head_vertical_dev, head_horizontal_dev, gaze_vertical_dev, 
         # f"Danger counter: {danger_frame_counters['head_vertical']}/{danger_frame_counters['head_horizontal']} (limit: {DANGER_FRAME_LIMIT})",
         # f"Normal counter: {normal_frame_counters['head_vertical']}/{normal_frame_counters['head_horizontal']} (reset: {NORMAL_RESET_FRAMES})",
         # "",
-        f"--- GAZE DEVIATIONS ---",
+        "--- GAZE DEVIATIONS ---",
         f"Vertical: {gaze_vertical_dev:+.1f}° (up: +{ALLOWED_GAZE_VERTICAL_UP:.1f}°, down: -{ALLOWED_GAZE_VERTICAL_DOWN:.1f}°)",
         f"Horizontal: {gaze_horizontal_dev:+.1f}° (allowed: ±{ALLOWED_GAZE_HORIZONTAL_ANGLE:.1f}°)",
         f"Warning counter: {warning_frame_counters['gaze_vertical']}/{warning_frame_counters['gaze_horizontal']} (limit: {WARNING_FRAME_LIMIT})",
@@ -944,7 +942,7 @@ while cap.isOpened():
                 warning_limit_exceeded[param] = False
                 danger_limit_exceeded[param] = False
             
-            print(f"[Calibration] Complete!")
+            print("[Calibration] Complete!")
             print(f"[Calibration] Gaze vector: {calibration_vector}")
             print(f"[Calibration] Head vector: {head_calibration_vector}")
             print(f"[Calibration] Face size: {calibration_face_size:.0f} px")

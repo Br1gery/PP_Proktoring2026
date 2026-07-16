@@ -4,10 +4,9 @@ import mediapipe as mp
 import time
 import math
 from scipy.spatial.transform import Rotation as Rscipy
-import asyncio
 import base64
 import logging
-from typing import Dict, Optional, Tuple, Any, List
+from typing import Dict, Optional, Any
 from datetime import datetime
 from ultralytics import YOLO
 

@@ -6,7 +6,7 @@ import bcrypt
 import json
 import logging
 from datetime import datetime, timedelta
-from typing import Dict, Optional
+from typing import Optional
 
 from core.database import get_db
 from core.models import User, Session as DBSession, Token as DBToken

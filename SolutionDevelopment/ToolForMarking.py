@@ -4,11 +4,8 @@ import mediapipe as mp
 import time
 import math
 from scipy.spatial.transform import Rotation as Rscipy
-import json
 from datetime import datetime
 from ultralytics import YOLO
-import os
-import openpyxl
 from openpyxl import Workbook
 
 # Screen setup
@@ -656,7 +653,7 @@ def check_and_draw_warnings(frame):
                    cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
         
         # Показываем счетчики опасности
-        counter_text = f"Danger frames: "
+        counter_text = "Danger frames: "
         for param in danger_params:
             counter_text += f"{param}: {danger_frame_counters[param]}, "
         cv2.putText(frame, counter_text[:-2], (20, h - 20), 
@@ -673,7 +670,7 @@ def check_and_draw_warnings(frame):
                    cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 165, 255), 2)
         
         # Показываем счетчики предупреждений
-        counter_text = f"Warning frames: "
+        counter_text = "Warning frames: "
         for param in warning_params:
             counter_text += f"{param}: {warning_frame_counters[param]}, "
         cv2.putText(frame, counter_text[:-2], (20, h - 20), 
@@ -696,7 +693,7 @@ def draw_info(frame, head_vertical_dev, head_horizontal_dev, gaze_vertical_dev, 
     
     info_y = 80
     info_lines = [
-        f"--- GAZE DEVIATIONS ---",
+        "--- GAZE DEVIATIONS ---",
         f"Vertical: {gaze_vertical_dev:+.1f}° (up: +{ALLOWED_GAZE_VERTICAL_UP:.1f}°, down: -{ALLOWED_GAZE_VERTICAL_DOWN:.1f}°)",
         f"Horizontal: {gaze_horizontal_dev:+.1f}° (allowed: ±{ALLOWED_GAZE_HORIZONTAL_ANGLE:.1f}°)",
         f"Warning counter: {warning_frame_counters['gaze_vertical']}/{warning_frame_counters['gaze_horizontal']} (limit: {WARNING_FRAME_LIMIT})",
@@ -708,9 +705,9 @@ def draw_info(frame, head_vertical_dev, head_horizontal_dev, gaze_vertical_dev, 
     if data_recording_enabled:
         info_lines.extend([
             "",
-            f"--- MANUAL MARKUP ---",
+            "--- MANUAL MARKUP ---",
             f"Violation marking: {'ACTIVE (1)' if manual_violation_active else 'INACTIVE (0)'}",
-            f"Press 'r' once to toggle violation marking",
+            "Press 'r' once to toggle violation marking",
             f"Current state: {'MARKING VIOLATIONS' if manual_violation_active else 'NOT MARKING'}"
         ])
     # =========================================================
@@ -889,7 +886,7 @@ def start_data_recording():
         data_recording_enabled = True
         
         print(f"[Data Recording] Начата запись данных в файл: {filename}")
-        print(f"[Data Recording] Новая колонка 'manual_violation' добавлена для ручной разметки")
+        print("[Data Recording] Новая колонка 'manual_violation' добавлена для ручной разметки")
         
     except Exception as e:
         print(f"[Data Recording] Ошибка при создании файла Excel: {e}")
@@ -1292,7 +1289,7 @@ while cap.isOpened():
             print("[Calibration] Начинаю запись данных в Excel файл...")
             start_data_recording()
             
-            print(f"[Calibration] Complete!")
+            print("[Calibration] Complete!")
             print(f"[Calibration] Gaze vector: {calibration_vector}")
             print(f"[Calibration] Head vector: {head_calibration_vector}")
             print(f"[Calibration] Face size: {calibration_face_size:.0f} px")
